@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pytest
+
+      - name: Generate synthetic training data (if no real data present)
+        run: |
+          if [ ! -f ml/data/processed/training_data.csv ]; then
+            python ml/data/generate_synthetic_data.py --n 3000
+          fi
+
+      - name: Train model
+        run: python ml/train.py
+
+      - name: Run tests (includes accuracy gate)
+        run: pytest backend/tests -v

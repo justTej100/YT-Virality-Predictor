@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # Re-run the same accuracy gate here as a hard blocker before deploy, not
+  # just as an informational CI check.
+  accuracy-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          pip install -r backend/requirements.txt
+          pip install pytest
+      - run: |
+          if [ ! -f ml/data/processed/training_data.csv ]; then
+            python ml/data/generate_synthetic_data.py --n 3000
+          fi
+          python ml/train.py
+      - run: pytest backend/tests/test_model_accuracy.py -v
+
+  deploy:
+    needs: accuracy-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Railway
+        uses: bervProject/railway-deploy@main
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: youtube-trend-predictor-backend
+        env:
+          DEPLOY_TIME: ${{ github.event.head_commit.timestamp }}
+          GIT_COMMIT_SHA: ${{ github.sha }}
