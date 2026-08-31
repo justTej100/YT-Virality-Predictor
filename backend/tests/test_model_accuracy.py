@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import MODEL_METADATA_PATH  # noqa: E402
 

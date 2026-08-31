@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: |
-          pip install -r backend/requirements.txt
+          pip install -r backend/requirements.txt -r ml/requirements.txt
           pip install pytest
       - run: |
           if [ ! -f ml/data/processed/training_data.csv ]; then
