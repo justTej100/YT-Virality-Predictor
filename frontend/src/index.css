@@ -7,19 +7,16 @@ html {
 }
 
 body {
-  background-color: #0b0d12;
-  background-image:
-    radial-gradient(circle at 15% 0%, rgba(61, 217, 214, 0.06), transparent 40%),
-    radial-gradient(circle at 85% 20%, rgba(255, 75, 75, 0.05), transparent 40%);
+  background-color: #dc2626;
   min-height: 100vh;
 }
 
 ::selection {
-  background: rgba(255, 75, 75, 0.3);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 *:focus-visible {
-  outline: 2px solid #3dd9d6;
+  outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
 

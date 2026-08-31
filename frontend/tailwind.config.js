@@ -4,16 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        base: "#0B0D12",
-        surface: "#14171F",
-        surface2: "#1A1E28",
-        border: "#262B36",
-        ink: "#ECEDF0",
-        muted: "#9AA1AE",
-        signal: "#FF4B4B",
-        signalDim: "#7A2A2A",
-        data: "#3DD9D6",
-        dataDim: "#1E4B4A",
+        base: "#DC2626",
+        surface: "#FFFFFF",
+        surface2: "#F3F4F6",
+        border: "#E5E7EB",
+        ink: "#1F2937",
+        muted: "#6B7280",
+        signal: "#E11D2E",
+        signalDim: "#FCA5A5",
+        data: "#0E7C86",
+        dataDim: "#CFFAFE",
       },
       fontFamily: {
         display: ["'Space Grotesk'", "sans-serif"],
