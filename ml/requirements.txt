@@ -1,0 +1,6 @@
+# Extra deps needed only for ml/train.py (experiment tracking).
+# Install alongside backend/requirements.txt when training:
+#   pip install -r backend/requirements.txt -r ml/requirements.txt
+# Deliberately NOT added to backend/requirements.txt - the serving container
+# doesn't need mlflow, it just reads ml/models/model_metadata.json.
+mlflow==2.17.2

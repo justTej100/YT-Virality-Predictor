@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
+import mlflow
+import mlflow.sklearn
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
@@ -32,6 +34,17 @@ from common.feature_engineering import full_feature_name_list  # noqa: E402
 MODELS_DIR = Path(__file__).resolve().parent / "models"
 METADATA_PATH = MODELS_DIR / "model_metadata.json"
 DEFAULT_DATA_PATH = Path(__file__).resolve().parent / "data" / "processed" / "training_data.csv"
+
+# Local, file-based MLflow tracking store - no server to run or host.
+# `mlflow ui --backend-store-uri ml/mlruns` opens a dashboard over everything
+# logged here: params, metrics, and the model artifact for every run, so you
+# can compare versions instead of reading model_metadata.json by eye.
+# This is purely for experiment visibility - it doesn't change what gets
+# deployed. That's still decided by model_metadata.json + the accuracy gate
+# below and in backend/tests/test_model_accuracy.py, exactly as before.
+MLRUNS_DIR = Path(__file__).resolve().parent / "mlruns"
+mlflow.set_tracking_uri(f"file:{MLRUNS_DIR}")
+mlflow.set_experiment("yt-virality-predictor")
 
 # Minimum accuracy required to accept a newly trained model. This is the gate
 # a CI pipeline checks before allowing a deploy - if a retrain produces a
@@ -69,19 +82,27 @@ def train(data_path: Path) -> dict:
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    model = GradientBoostingClassifier(
-        n_estimators=150, max_depth=3, learning_rate=0.08, random_state=42
-    )
-    model.fit(X_train, y_train)
+    hyperparams = {"n_estimators": 150, "max_depth": 3, "learning_rate": 0.08, "random_state": 42}
 
-    preds = model.predict(X_test)
-    probs = model.predict_proba(X_test)[:, 1]
+    with mlflow.start_run():
+        mlflow.log_params(hyperparams)
+        mlflow.log_param("training_data", str(data_path))
+        mlflow.log_param("n_train_rows", len(X_train))
+        mlflow.log_param("n_test_rows", len(X_test))
 
-    metrics = {
-        "accuracy": round(accuracy_score(y_test, preds), 4),
-        "f1_score": round(f1_score(y_test, preds), 4),
-        "roc_auc": round(roc_auc_score(y_test, probs), 4),
-    }
+        model = GradientBoostingClassifier(**hyperparams)
+        model.fit(X_train, y_train)
+
+        preds = model.predict(X_test)
+        probs = model.predict_proba(X_test)[:, 1]
+
+        metrics = {
+            "accuracy": round(accuracy_score(y_test, preds), 4),
+            "f1_score": round(f1_score(y_test, preds), 4),
+            "roc_auc": round(roc_auc_score(y_test, probs), 4),
+        }
+        mlflow.log_metrics(metrics)
+        mlflow.sklearn.log_model(model, "model")
 
     return {"model": model, "metrics": metrics, "n_train": len(X_train), "n_test": len(X_test)}
 
