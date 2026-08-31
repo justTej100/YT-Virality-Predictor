@@ -1,4 +1,9 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// Use `??` (not `||`) so an intentionally empty string is respected. That's
+// what the combined single-container build sets, so fetches below resolve
+// as same-origin relative paths (e.g. "/predict") instead of falling back
+// to localhost. Local `npm run dev` still defaults to localhost:8000 since
+// the var is unset (undefined) in that case.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 async function handle(res) {
   if (!res.ok) {
