@@ -10,10 +10,10 @@ services:
       - ./ml/models:/app/ml/models
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./backend/app
           target: /app/app
-        - action: sync
+        - action: sync+restart
           path: ./common
           target: /app/common
         - action: rebuild
@@ -23,10 +23,11 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      target: dev
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     ports:
-      - "4173:4173"
+      - "5173:5173"
     env_file: .env
     depends_on:
       - backend
