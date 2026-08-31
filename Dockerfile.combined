@@ -1,0 +1,44 @@
+# Single-service build: frontend is built as static assets and served
+# directly by the FastAPI app, so this whole image is one process listening
+# on one port. Build context must be the repo root (same reason as the
+# original backend/Dockerfile: it needs common/ and ml/models/ too).
+#
+#   docker build -f Dockerfile.combined -t yt-trend-predictor .
+#   docker run -p 8000:8000 -e YOUTUBE_API_KEY=your_key yt-trend-predictor
+#
+# Then open http://localhost:8000 — the frontend is served at "/", the API
+# is on the same origin (/predict, /stats, /health).
+
+# ---- Stage 1: build the frontend ----
+FROM node:20-slim AS frontend-build
+WORKDIR /frontend
+COPY frontend/package.json ./
+RUN npm install
+COPY frontend/ ./
+# Empty on purpose: with the `??` fix in client.js, this makes the built
+# frontend call relative paths ("/predict") instead of a fixed host, since
+# it'll be served from the same origin as the API in this image.
+ENV VITE_API_BASE_URL=""
+RUN npm run build
+
+# ---- Stage 2: backend, serving the built frontend as static files ----
+FROM python:3.11-slim
+WORKDIR /app
+
+COPY backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY common ./common
+COPY ml/models ./ml/models
+COPY backend/main.py ./main.py
+COPY backend/app ./app
+
+# Built frontend assets land here; main.py mounts this directory at "/" if
+# it exists, so the frontend and API are served from a single process.
+COPY --from=frontend-build /frontend/dist ./static
+
+ENV PYTHONUNBUFFERED=1
+ENV APP_BASE_DIR=/app
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
