@@ -4,7 +4,10 @@ __pycache__/
 venv/
 *.db
 ml/data/raw/*.csv
+ml/data/raw/*.jsonl
+!ml/data/raw/snapshots.jsonl
 ml/data/processed/*.csv
+ml/mlruns/
 node_modules/
 dist/
 .env

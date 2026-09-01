@@ -1,45 +1,35 @@
 """
 Polls YouTube's trending list + tracked videos and appends stat snapshots to
-a local CSV. Run this on a schedule (cron, GitHub Actions schedule, etc.) to
-accumulate real training data over time.
+a local JSON Lines file (one JSON object per line). Run this on a schedule
+(cron, GitHub Actions schedule, etc.) to accumulate real training data over
+time.
 
 Usage:
     export YOUTUBE_API_KEY=your_key_here
     python ml/ingestion/poll_trending.py --region US --category 0
 
-Each run appends one row per video to ml/data/raw/snapshots.csv with the
-UTC timestamp of the poll. Running this every 15-30 min lets you later
-compute view/like/comment VELOCITY between consecutive snapshots of the
-same video_id, which is the strongest predictive signal for the model.
+Each run appends one JSON line per video to ml/data/raw/snapshots.jsonl
+with the UTC timestamp of the poll. Running this every 15-30 min lets you
+later compute view/like/comment VELOCITY between consecutive snapshots of
+the same video_id, which is the strongest predictive signal for the model.
+
+JSON Lines (not a single JSON array) is deliberate: each poll only ever
+appends new lines to the end of the file, so writing stays fast no matter
+how large the file grows. A single big JSON array would require reading,
+parsing, and rewriting the entire file on every run.
 """
 
 from __future__ import annotations
 
 import argparse
-import csv
+import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 
 from googleapiclient.discovery import build
 
-RAW_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "snapshots.csv"
-
-CSV_COLUMNS = [
-    "fetched_at",
-    "video_id",
-    "title",
-    "channel_id",
-    "category_id",
-    "published_at",
-    "duration",
-    "tags",
-    "view_count",
-    "like_count",
-    "comment_count",
-    "subscriber_count",
-    "channel_video_count",
-]
+RAW_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "snapshots.jsonl"
 
 
 def get_youtube_client():
@@ -88,7 +78,7 @@ def rows_from_api_response(videos: list[dict], channel_stats: dict[str, dict], f
                 "category_id": snippet.get("categoryId", ""),
                 "published_at": snippet.get("publishedAt", ""),
                 "duration": content.get("duration", ""),
-                "tags": "|".join(snippet.get("tags", [])),
+                "tags": snippet.get("tags", []),  # real JSON array now, not a "|"-joined string
                 "view_count": stats.get("viewCount", 0),
                 "like_count": stats.get("likeCount", 0),
                 "comment_count": stats.get("commentCount", 0),
@@ -101,12 +91,9 @@ def rows_from_api_response(videos: list[dict], channel_stats: dict[str, dict], f
 
 def append_rows(rows: list[dict]) -> None:
     RAW_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    file_exists = RAW_DATA_PATH.exists()
-    with open(RAW_DATA_PATH, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
-        if not file_exists:
-            writer.writeheader()
-        writer.writerows(rows)
+    with open(RAW_DATA_PATH, "a", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row) + "\n")
 
 
 def main():

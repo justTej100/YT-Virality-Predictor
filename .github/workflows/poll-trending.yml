@@ -1,0 +1,39 @@
+name: Poll YouTube Trending
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 min - matches poll_trending.py's own docstring advice
+  workflow_dispatch: {}       # lets you trigger a run manually from the Actions tab
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to push the updated snapshots.jsonl back to the repo
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ingestion dependency
+        run: pip install google-api-python-client==2.145.0
+
+      - name: Poll trending videos
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python ml/ingestion/poll_trending.py --region US --category 0
+
+      - name: Commit updated snapshot data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ml/data/raw/snapshots.jsonl
+          if git diff --cached --quiet; then
+            echo "No new rows, nothing to commit."
+          else
+            git commit -m "chore: append trending snapshot [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi
