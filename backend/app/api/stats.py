@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from app.core.config import DEPLOY_TIME, GIT_COMMIT_SHA
 from app.db.logs import count_predictions, recent_predictions
 from app.models.predictor import predictor
-from app.models.schema import StatsResponse
+from app.models.schema import CouncilMember, StatsResponse
 
 router = APIRouter()
 
@@ -11,9 +11,15 @@ router = APIRouter()
 @router.get("/stats", response_model=StatsResponse)
 def stats():
     return StatsResponse(
-        model_version=predictor.version or 0,
-        model_trained_at=predictor.trained_at,
-        model_accuracy=predictor.accuracy,
+        council=[
+            CouncilMember(
+                version=m["version"],
+                accuracy=m["accuracy"],
+                weight=round(m["weight"], 3),
+                trained_at=m["trained_at"],
+            )
+            for m in predictor.council
+        ],
         total_predictions_served=count_predictions(),
         deploy_time=DEPLOY_TIME or None,
         git_commit_sha=GIT_COMMIT_SHA or None,

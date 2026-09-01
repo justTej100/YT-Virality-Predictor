@@ -3,10 +3,12 @@ from fastapi import APIRouter, HTTPException
 from app.db.logs import log_prediction
 from app.models.predictor import predictor
 from app.models.schema import (
+    ExplanationItem,
     FeatureBreakdown,
     PredictRequest,
     PredictResponse,
     VideoInfo,
+    VoteBreakdown,
 )
 from app.services.youtube_client import extract_video_id, fetch_video_record
 from common.feature_engineering import KNOWN_CATEGORIES
@@ -19,7 +21,7 @@ def predict(request: PredictRequest):
     if not predictor.is_ready():
         raise HTTPException(
             status_code=503,
-            detail="No deployable model is currently loaded. Run ml/train.py to produce one.",
+            detail="No council members are currently loaded. Run ml/train.py to produce one.",
         )
 
     video_id = extract_video_id(request.video_url)
@@ -58,5 +60,7 @@ def predict(request: PredictRequest):
             subscriber_count=video_record["subscriber_count"],
             category=category_name,
         ),
+        council_votes=[VoteBreakdown(**v) for v in result["council_votes"]],
+        explanation=[ExplanationItem(**e) for e in result["explanation"]],
         model_version=predictor.version,
     )

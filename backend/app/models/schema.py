@@ -14,6 +14,18 @@ class FeatureBreakdown(BaseModel):
     category: str
 
 
+class VoteBreakdown(BaseModel):
+    version: int
+    probability: float  # this council member's own 0-100 score
+    weight: float  # this member's share of the final weighted vote
+
+
+class ExplanationItem(BaseModel):
+    feature: str
+    contribution: float  # signed, log-odds scale, weighted across the council
+    direction: str  # "up" | "down"
+
+
 class VideoInfo(BaseModel):
     video_id: str
     title: str
@@ -26,16 +38,23 @@ class VideoInfo(BaseModel):
 
 class PredictResponse(BaseModel):
     video: VideoInfo
-    viral_potential_score: float  # 0-100
+    viral_potential_score: float  # 0-100, weighted across the council
     label: str  # "Low" | "Medium" | "High"
     features: FeatureBreakdown
-    model_version: int
+    council_votes: list[VoteBreakdown]
+    explanation: list[ExplanationItem]
+    model_version: int  # newest (highest-weighted) council member, for logging
+
+
+class CouncilMember(BaseModel):
+    version: int
+    accuracy: float
+    weight: float
+    trained_at: str | None
 
 
 class StatsResponse(BaseModel):
-    model_version: int
-    model_trained_at: str | None
-    model_accuracy: float | None
+    council: list[CouncilMember]
     total_predictions_served: int
     deploy_time: str | None
     git_commit_sha: str | None
