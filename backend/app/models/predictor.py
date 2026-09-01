@@ -4,6 +4,7 @@ from pathlib import Path
 
 import joblib
 import numpy as np
+import pandas as pd
 import shap
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))  # repo root, for `common`
@@ -81,7 +82,10 @@ class Predictor:
 
         feature_dict = build_feature_vector(video_record)
         feature_names = full_feature_name_list()
-        vector = np.array([feature_dict_to_vector(feature_dict)])
+        # A DataFrame with the same column names/order used at training time,
+        # not a bare array - avoids sklearn's "X does not have valid feature
+        # names" warning and keeps SHAP's feature attribution aligned to name.
+        vector = pd.DataFrame([feature_dict_to_vector(feature_dict)], columns=feature_names)
 
         weighted_proba = 0.0
         weighted_shap = [0.0] * len(feature_names)

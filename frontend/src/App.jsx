@@ -3,6 +3,7 @@ import { predictVideo } from "./api/client.js";
 import PredictForm from "./components/PredictForm.jsx";
 import ResultCard from "./components/ResultCard.jsx";
 import FeatureBreakdown from "./components/FeatureBreakdown.jsx";
+import CouncilExplanation from "./components/CouncilExplanation.jsx";
 
 export default function App() {
   const [result, setResult] = useState(null);
@@ -49,6 +50,7 @@ export default function App() {
           <div className="mt-8 space-y-6">
             <ResultCard result={result} />
             <FeatureBreakdown features={result.features} />
+            <CouncilExplanation councilVotes={result.council_votes} explanation={result.explanation} />
           </div>
         )}
       </div>
