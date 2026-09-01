@@ -35,7 +35,7 @@ export default function App() {
     >
       <div className="w-full max-w-xl">
         <h1 className="text-center font-display font-bold text-5xl sm:text-6xl text-white mb-8 tracking-tight">
-          Trendcast
+          YT Virality Predictor
         </h1>
 
         <PredictForm onSubmit={handlePredict} loading={loading} />
@@ -43,27 +43,36 @@ export default function App() {
         {error && (
           <p className="mt-4 text-center text-sm text-white">{error}</p>
         )}
-
-        {loading && <SkeletonResult />}
-
-        {!loading && result && (
-          <div className="mt-8 space-y-6">
-            <ResultCard result={result} />
-            <FeatureBreakdown features={result.features} />
-            <CouncilExplanation councilVotes={result.council_votes} explanation={result.explanation} />
-          </div>
-        )}
       </div>
+
+      {loading && (
+        <div className="w-full max-w-5xl mt-8">
+          <SkeletonResult />
+        </div>
+      )}
+
+      {!loading && result && (
+        <div className="w-full max-w-5xl mt-8 space-y-6">
+          <ResultCard result={result} />
+          <FeatureBreakdown features={result.features} />
+          <CouncilExplanation councilVotes={result.council_votes} explanation={result.explanation} />
+        </div>
+      )}
     </div>
   );
 }
 
 function SkeletonResult() {
   return (
-    <div className="mt-8 rounded-lg bg-white p-6 animate-pulse">
-      <div className="h-40 bg-surface2 rounded-md mb-4" />
-      <div className="h-4 w-2/3 bg-surface2 rounded mb-2" />
-      <div className="h-4 w-1/3 bg-surface2 rounded" />
+    <div className="rounded-lg bg-white p-6 animate-pulse">
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="h-72 bg-surface2 rounded-md" />
+        <div className="flex flex-col gap-3 py-2">
+          <div className="h-6 w-3/4 bg-surface2 rounded" />
+          <div className="h-4 w-1/3 bg-surface2 rounded" />
+          <div className="h-16 w-1/2 bg-surface2 rounded mt-6" />
+        </div>
+      </div>
     </div>
   );
 }
