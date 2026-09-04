@@ -61,7 +61,7 @@ build a proper training set from the accumulated snapshots and swap it in for
 `ml/train.py`. The synthetic generator exists so the full pipeline is
 demoable immediately, not because it's the intended long-term data source.
 
-## Honest scope notes (for the README you show judges)
+## Honest scope notes 
 
 - Model registry is a JSON file, not MLflow/W&B — intentional for hackathon
   scope; noted as the first upgrade for a real deployment.
