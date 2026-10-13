@@ -1,9 +1,9 @@
 name: Poll YouTube Trending
 
-on:
-  schedule:
-    - cron: "*/30 * * * *"   # every 30 min - matches poll_trending.py's own docstring advice
-  workflow_dispatch: {}       # lets you trigger a run manually from the Actions tab
+# on:
+#   schedule:
+#     - cron: "*/30 * * * *"   # every 30 min - matches poll_trending.py's own docstring advice
+#   workflow_dispatch: {}       # lets you trigger a run manually from the Actions tab
 
 jobs:
   poll:
